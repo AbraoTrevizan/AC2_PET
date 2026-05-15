@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetCare Pro</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+
+        body{
+            background-color:#f8fafc;
+            font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+            padding:20px;
+        }
+
+        .card{
+            border:none;
+            border-radius:15px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom:20px;
+        }
+
+        .badge-id{
+            background-color:#e0e7ff;
+            color:#4338ca;
+            font-weight:bold;
+        }
+
+        .btn-primary{
+            background-color:#2563eb;
+            border:none;
+        }
+
+        .btn-success{
+            background-color:#10b981;
+            border:none;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header class="mb-4 text-center">
+
+        <h2 class="fw-bold text-primary">
+            <i class="bi bi-heart-pulse-fill"></i>
+            PetCare Pro
+        </h2>
+
+        <p class="text-muted">
+            Sistema de Gestão Veterinária
+        </p>
+
+    </header>
+
+    <div class="row">
+
+        <!-- COLUNA ESQUERDA -->
+        <div class="col-md-5">
+
+            <!-- CADASTRO PET -->
+            <div class="card p-4">
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Novo Pet
+                </h5>
+
+                <input
+                        type="text"
+                        id="pNome"
+                        class="form-control mb-2"
+                        placeholder="Nome do Animal"
+                >
+
+                <input
+                        type="text"
+                        id="pEspecie"
+                        class="form-control mb-2"
+                        placeholder="Espécie (Cão, Gato...)"
+                >
+
+                <input
+                        type="text"
+                        id="pTutor"
+                        class="form-control mb-3"
+                        placeholder="Nome do Tutor"
+                >
+
+                <button
+                        class="btn btn-primary w-100 fw-bold"
+                        onclick="cadastrarPet()">
+
+                    Salvar Cadastro
+
+                </button>
+
+            </div>
+
+            <!-- AGENDAR CONSULTA -->
+            <div class="card p-4">
+
+                <h5 class="fw-bold mb-3 text-success">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    Agendar Consulta
+                </h5>
+
+                <label class="small fw-bold text-muted">
+                    ID do Pet
+                </label>
+
+                <input
+                        type="number"
+                        id="aId"
+                        class="form-control mb-2"
+                        placeholder="Ex: 1"
+                >
+
+                <label class="small fw-bold text-muted">
+                    Data e Hora
+                </label>
+
+                <input
+                        type="datetime-local"
+                        id="aData"
+                        class="form-control mb-2"
+                >
+
+                <label class="small fw-bold text-muted">
+                    Especialidade
+                </label>
+
+                <select
+                        id="aEsp"
+                        class="form-select mb-2">
+
+                    <option value="Clínica Geral">
+                        Clínica Geral
+                    </option>
+
+                    <option value="Dermatologia">
+                        Dermatologia
+                    </option>
+
+                    <option value="Ortopedia">
+                        Ortopedia
+                    </option>
+
+                    <option value="Vacinação">
+                        Vacinação
+                    </option>
+
+                </select>
+
+                <textarea
+                        id="aHist"
+                        class="form-control mb-3"
+                        placeholder="Sintomas ou observações..."></textarea>
+
+                <button
+                        class="btn btn-success w-100 fw-bold"
+                        onclick="agendar()">
+
+                    Confirmar Agendamento
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- COLUNA DIREITA -->
+        <div class="col-md-7">
+
+            <!-- LISTA PETS -->
+            <div class="card p-4">
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Pets Cadastrados
+                </h5>
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Animal</th>
+                            <th>Tutor</th>
+                            <th class="text-end">Ação</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="corpoAnimais"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <!-- HISTÓRICO -->
+            <div class="card p-4">
+
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Histórico Geral
+                </h5>
+
+                <div id="listaHistorico">
+
+                    <p class="text-muted small">
+                        Nenhum agendamento encontrado.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    // URL DA API
+    const API = "http://localhost:8083/api";
+
+    // CARREGAR DADOS AO INICIAR
+    window.onload = () => {
+
+        listarAnimais();
+        verHistorico();
+
+    };
+
+    // ===============================
+    // CADASTRAR PET
+    // ===============================
+
+    async function cadastrarPet(){
+
+        const pet = {
+
+            nome: document.getElementById('pNome').value,
+            especie: document.getElementById('pEspecie').value,
+            tutor: document.getElementById('pTutor').value
+
+        };
+
+        if(!pet.nome || !pet.tutor){
+
+            alert("Preencha nome e tutor!");
+            return;
+
+        }
+
+        try{
+
+            await fetch(`${API}/animais`,{
+
+                method:'POST',
+
+                headers:{
+                    'Content-Type':'application/json'
+                },
+
+                body:JSON.stringify(pet)
+
+            });
+
+            limparCamposPet();
+
+            listarAnimais();
+
+            alert("Pet cadastrado!");
+
+        }catch(e){
+
+            alert("Erro ao conectar com o servidor!");
+
+        }
+
+    }
+
+    // ===============================
+    // LISTAR PETS
+    // ===============================
+
+    async function listarAnimais(){
+
+        try{
+
+            const res = await fetch(`${API}/animais`);
+
+            const dados = await res.json();
+
+            let html = '';
+
+            dados.forEach(a => {
+
+                html += `
+
+                    <tr>
+
+                        <td>
+                            <span class="badge badge-id">
+                                ${a.id}
+                            </span>
+                        </td>
+
+                        <td>
+
+                            <strong>${a.nome}</strong>
+
+                            <br>
+
+                            <small class="text-muted">
+                                ${a.especie}
+                            </small>
+
+                        </td>
+
+                        <td>
+                            ${a.tutor}
+                        </td>
+
+                        <td class="text-end">
+
+                            <button
+                                    class="btn btn-sm text-danger"
+                                    onclick="excluirPet(${a.id})">
+
+                                <i class="bi bi-trash"></i>
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            });
+
+            document.getElementById('corpoAnimais').innerHTML =
+                html ||
+                '<tr><td colspan="4" class="text-center text-muted">Nenhum pet cadastrado</td></tr>';
+
+        }catch(e){
+
+            console.log("Servidor offline");
+
+        }
+
+    }
+
+    // ===============================
+    // EXCLUIR PET
+    // ===============================
+
+    async function excluirPet(id){
+
+        if(confirm("Deseja excluir este pet?")){
+
+            await fetch(`${API}/animais/${id}`,{
+                method:'DELETE'
+            });
+
+            listarAnimais();
+
+            verHistorico();
+
+        }
+
+    }
+
+    // ===============================
+    // AGENDAR CONSULTA
+    // ===============================
+
+    async function agendar(){
+
+        const obj = {
+
+            idAnimal:
+                parseInt(document.getElementById('aId').value),
+
+            idVeterinario:1,
+
+            dataHora:
+                document.getElementById('aData').value,
+
+            especialidadeRequisitada:
+                document.getElementById('aEsp').value,
+
+            historico:
+                document.getElementById('aHist').value
+
+        };
+
+        if(!obj.idAnimal || !obj.dataHora){
+
+            alert("Informe ID e Data!");
+            return;
+
+        }
+
+        try{
+
+            const res = await fetch(`${API}/agendar`,{
+
+                method:'POST',
+
+                headers:{
+                    'Content-Type':'application/json'
+                },
+
+                body:JSON.stringify(obj)
+
+            });
+
+            if(res.ok){
+
+                document.getElementById('aId').value = '';
+                document.getElementById('aData').value = '';
+                document.getElementById('aHist').value = '';
+
+                verHistorico();
+
+                alert("Consulta agendada!");
+
+            }else{
+
+                const erro = await res.text();
+
+                alert(erro);
+
+            }
+
+        }catch(e){
+
+            alert("Erro de conexão!");
+
+        }
+
+    }
+
+    // ===============================
+    // VER HISTÓRICO
+    // ===============================
+
+    async function verHistorico(){
+
+        try{
+
+            const res = await fetch(`${API}/consultas`);
+
+            const dados = await res.json();
+
+            let html = '';
+
+            dados.forEach(c => {
+
+                html += `
+
+                    <div class="border-bottom py-2 d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <span class="badge bg-success small">
+
+                                Pet ID: ${c.idAnimal}
+
+                            </span>
+
+                            <strong class="ms-2">
+
+                                ${c.especialidadeRequisitada}
+
+                            </strong>
+
+                            <br>
+
+                            <small class="text-muted">
+
+                                ${c.dataHora.replace('T',' ')}
+
+                            </small>
+
+                            <p class="mb-0 small text-secondary">
+
+                                ${c.historico || ''}
+
+                            </p>
+
+                        </div>
+
+                        <button
+                                class="btn btn-sm text-danger"
+                                onclick="excluirConsulta(${c.id})">
+
+                            <i class="bi bi-x-circle"></i>
+
+                        </button>
+
+                    </div>
+
+                `;
+
+            });
+
+            document.getElementById('listaHistorico').innerHTML =
+                html ||
+                '<p class="text-muted small">Nenhum agendamento.</p>';
+
+        }catch(e){
+
+            console.log("Erro ao carregar histórico");
+
+        }
+
+    }
+
+    // ===============================
+    // EXCLUIR CONSULTA
+    // ===============================
+
+    async function excluirConsulta(id){
+
+        await fetch(`${API}/consultas/${id}`,{
+            method:'DELETE'
+        });
+
+        verHistorico();
+
+    }
+
+
+    function limparCamposPet(){
+
+        document.getElementById('pNome').value = '';
+        document.getElementById('pEspecie').value = '';
+        document.getElementById('pTutor').value = '';
+
+    }
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
