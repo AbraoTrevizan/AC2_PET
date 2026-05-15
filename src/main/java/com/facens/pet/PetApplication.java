@@ -1,44 +1,48 @@
 package com.facens.pet;
 
-import com.facens.pet.entity.Veterinario;
-import com.facens.pet.repository.VeterinarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+
+import com.facens.pet.entity.Veterinario;
+import com.facens.pet.repository.VeterinarioRepository;
 
 @SpringBootApplication
-public class PetApplication {
+public class PetApplication implements CommandLineRunner {
+
+    @Autowired
+    private VeterinarioRepository veterinarioRepository;
 
     public static void main(String[] args) {
-
-        SpringApplication.run(
-                PetApplication.class,
-                args
-        );
-
+        SpringApplication.run(PetApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner init(
-            VeterinarioRepository repository
-    ) {
+    @Override
+    public void run(String... args) {
 
-        return args -> {
+        if (veterinarioRepository.count() == 0) {
 
-            if(repository.count() == 0){
+            Veterinario v1 = new Veterinario();
+            v1.setNome("Carlos");
+            v1.setEspecialidade("Clínica Geral");
 
-                Veterinario vet = new Veterinario();
+            Veterinario v2 = new Veterinario();
+            v2.setNome("Ana");
+            v2.setEspecialidade("Dermatologia");
 
-                vet.setNome("Dr. Carlos");
-                vet.setEspecialidade("Clínica Geral");
+            Veterinario v3 = new Veterinario();
+            v3.setNome("Pedro");
+            v3.setEspecialidade("Ortopedia");
 
-                repository.save(vet);
+            Veterinario v4 = new Veterinario();
+            v4.setNome("Julia");
+            v4.setEspecialidade("Vacinação");
 
-            }
-
-        };
-
+            veterinarioRepository.save(v1);
+            veterinarioRepository.save(v2);
+            veterinarioRepository.save(v3);
+            veterinarioRepository.save(v4);
+        }
     }
-
 }
